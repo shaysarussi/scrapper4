@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import scrapperRoutes from "./routes/scrapper"
+import builderRoutes from "./routes/builder"
 import {notFound,errorHandler} from './middleware/errorMiddleware'
 
 
@@ -10,6 +11,7 @@ const app = express()
 app.use(express.json())
 
 app.use('/api/scrape',scrapperRoutes)
+app.use('/api/builder',builderRoutes)
 
 app.use(notFound)
 app.use(errorHandler)

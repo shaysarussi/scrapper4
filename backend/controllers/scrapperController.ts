@@ -12,10 +12,11 @@ const scraper = asyncHandler (async (req: Request,res: Response)=>{
    const respone = await scrapperSite(req.body.url);
 
    Promise.all(respone)
-    .then((r:any) => res.status(200).json({ divs: r, length: r.length }))
+    .then((components) => res.status(200).json({ components, length: components.length }))
     .catch(() => res.status(500).json({ message: "Error occur" }));
 })
 
+
 export {
-  scraper,
+  scraper
 }

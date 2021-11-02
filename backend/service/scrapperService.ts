@@ -3,9 +3,13 @@ import { By, promise } from "selenium-webdriver";
 
 
 const scrapperSite = async (url:string):Promise<any>=>{
+ 
+    const textComponentByTitle = await fetchText(url,"title")
+    const textComponentByBody = await fetchText(url,"body")
     const imges = await fetchImages(url);
     const buttons = await fetchbuttons(url)
-    return [...buttons,...imges]
+    const containers = await fetchContainer(url)
+     return [...buttons,...imges,...textComponentByTitle,...textComponentByBody,...containers]
 }
 
 
@@ -34,7 +38,6 @@ const fetchImages = async (url: string) => {
     const driver = await initDriver()
     await driver.get(url)
     const buttons = await driver.findElements(By.className("linkButton"))
-    console.log(buttons)
 
     const buttonsPromiseArr = buttons.map(async (button) => {
         const id = await button.getId();
@@ -79,6 +82,69 @@ const fetchImages = async (url: string) => {
       });
       
       return buttonsPromiseArr
+
+  }
+
+
+  const fetchText =async (url:string,className:string)=>{
+    const driver = await initDriver()
+    await driver.get(url)
+    const textWarraper = await driver.findElements(By.className(className))
+    const textComponent = []
+    textWarraper.shift()
+    textWarraper.shift()
+    for (const subElement of textWarraper) {
+      const allElements = await subElement.findElements(By.xpath("./*"))
+      let textHtml = ''
+      for(const element of allElements){
+          textHtml = ''
+          const txt = await element.getText()
+          const position = await element.getRect()
+          const color = await element.getCssValue("color")
+          const fontSize = await element.getCssValue("font-size")
+          const tag_name = await element.getTagName()
+          const zIndex =await element.getCssValue("z-index")
+          textHtml = `<${tag_name} style="color:${color};font-size:${fontSize};">${txt}</${tag_name}>`
+          textComponent.push({
+             type:"text",
+             ...position,
+             text:textHtml,
+             zIndex
+          })
+      }
+    }
+
+    return textComponent 
+  }
+
+  const fetchContainer=async(url:string)=>{
+    const driver = await initDriver()
+    await driver.get(url)
+    const containers = await driver.findElements(By.className("simpleRectangle"))
+    const containerPromises  = containers.map(async (container) => {
+      const id = await container.getId();
+      const position = await container.getRect()
+      const backgroundColor = await container.getCssValue("background-color")
+      const borderWidth = await container.getCssValue("border-width")
+      const borderRadius = await container.getCssValue("border-radius")
+      const borderColor = await container.getCssValue("border-color")
+      const zIndex =await container.getCssValue("z-index")
+
+      return { 
+        id,
+        type:"container", 
+        ...position,
+        style: {
+            backgroundColor,
+            borderRadius,
+            borderWidth,
+            borderColor          
+        },
+        zIndex
+    }
+    })
+
+    return containerPromises
 
   }
  
